@@ -1,0 +1,40 @@
+{
+  "id": 11325371,
+  "name": "devops-files",
+  "target": "push",
+  "source_type": "Repository",
+  "source": "labflix/labflix",
+  "enforcement": "active",
+  "conditions": null,
+  "rules": [
+    {
+      "type": "file_path_restriction",
+      "parameters": {
+        "restricted_file_paths": [
+          ".cicd/**/*",
+          "Dockerfile",
+          "buildspec.yml",
+          "docker-compose.yaml",
+          "sonarqube.buildspec.yml"
+        ]
+      }
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": null,
+      "actor_type": "OrganizationAdmin",
+      "bypass_mode": "exempt"
+    },
+    {
+      "actor_id": 2,
+      "actor_type": "RepositoryRole",
+      "bypass_mode": "always"
+    },
+    {
+      "actor_id": 5,
+      "actor_type": "RepositoryRole",
+      "bypass_mode": "always"
+    }
+  ]
+}
