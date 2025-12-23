@@ -8,22 +8,30 @@
 > - Todas as linhas de código relevantes foram lidas e compreendidas.  
 > - O revisor concorda com a solução, não apenas com o resultado.  
 > - Qualquer bug, regressão ou problema de design que não tenha sido identificado aqui também é de responsabilidade do revisor.  
+>  
+>  Em caso de dúvidas, consulte a **[documentação do fluxo de trabalho](https://flix-vw2ox3xn.atlassian.net/wiki/x/AQCiBg)**.
 
 ---
 
-## 📎 Informações Jira
+## 📎 Informações sobre a entrega
 
 <!-- Informe o link da história ou sub-tarefa no Jira -->
 https://SEU-JIRA/browse/ABC-123
 
----
+### Variáveis de ambiente (envs), feature toggles, remote configs etc.:
+
+<!-- Liste aqui ou escreva "N/A" -->
+- N/A
+
+### Criação ou alteração de Recursos de Infraestrutura necessários (buckets, tabelas, etc.):
+
+<!-- Liste aqui ou escreva "N/A" -->
+- N/A
 
 ## ✅ Checklists  
 <!-- ⚠️ O checklist deve ser preenchido APENAS pelo REVISOR -->
 
----
-
-## 🧭 Antes do Code Review (bloqueante)
+### 🧭 Antes do Code Review (bloqueante)
 
 > Se **qualquer** item abaixo não estiver correto, **NÃO INICIE O CODE REVIEW**.  
 > Solicite ajustes ao autor da PR.
@@ -43,9 +51,7 @@ https://SEU-JIRA/browse/ABC-123
 - [ ] A PR não está marcada como WIP / Draft
 - [ ] O autor da PR está corretamente definido como responsável (Assignee)
 
----
-
-## 🔍 Durante o Code Review (leitura obrigatória)
+### 🔍 Durante o Code Review (leitura obrigatória)
 
 > ⚠️ **Não aprove PRs por hábito, pressa ou confiança pessoal.**
 
@@ -61,9 +67,7 @@ https://SEU-JIRA/browse/ABC-123
 - [ ] Não existe duplicação de lógica que poderia ser reutilizada
 - [ ] O código segue os padrões e convenções do projeto
 
----
-
-## 🧠 Qualidade, arquitetura e impacto
+### 🧠 Qualidade, arquitetura e impacto
 
 - [ ] A solução escolhida é a **mais simples possível** para o problema
 - [ ] Não há impacto negativo de performance evidente
@@ -73,9 +77,7 @@ https://SEU-JIRA/browse/ABC-123
 - [ ] O código não introduz acoplamento desnecessário
 - [ ] O código não dificulta testes ou manutenção futura
 
----
-
-## 🧪 Testes e validação
+### 🧪 Testes e validação
 
 - [ ] O código foi testado manualmente pelo autor
 - [ ] O revisor entende **como** testar essa mudança
@@ -83,23 +85,15 @@ https://SEU-JIRA/browse/ABC-123
 - [ ] Não há dependência implícita de estado externo (cache, env local, dados mágicos)
 - [ ] O comportamento em dev/homol é previsível e consistente
 
----
+### 🌱 Variáveis de ambiente / Configurações
 
-## 🌱 Variáveis de ambiente / Configurações
-
-- [ ] Variáveis de ambiente novas, alteradas ou removidas foram listadas abaixo
-- [ ] As variáveis estão documentadas (nome, propósito e impacto)
+- [ ] Variáveis de ambiente novas, alteradas ou removidas foram listadas [acima](#variáveis-de-ambiente-envs-feature-toggles-remote-configs-etc)
+- [ ] Recursos de infraestrutura criados, alterados ou removidos foram listados [acima](#criação-ou-alteração-de-recursos-de-infraestrutura-necessários-buckets-tabelas-etc)
+- [ ] As variáveis e recursos estão apropriadamente detalhados na lista (nome, propósito, impacto, ambientes)
 - [ ] Não existem segredos hardcoded no código
-- [ ] Flags, configs remotas ou feature toggles estão corretamente descritas
+- [ ] Variáveis e recursos listados já foram preparados no ambiente alvo desta PR (se apropriado)
 
-### Variáveis de ambiente (envs)
-
-<!-- Liste aqui ou escreva "N/A" -->
-- N/A
-
----
-
-## 🚫 Regras de workflow (CRÍTICAS)
+### 🚫 Regras de workflow (CRÍTICAS)
 
 - [ ] Nenhum conflito foi resolvido diretamente na PR via GitHub
 - [ ] Nenhum commit direto foi feito em:
@@ -110,8 +104,6 @@ https://SEU-JIRA/browse/ABC-123
 - [ ] Nenhum squash ou rebase foi realizado fora de production
 - [ ] Esta PR **não** contamina histórico de outras branches
 
----
-
 ## 🧾 Declaração final do revisor (obrigatória)
 
 > ⚠️ Ao marcar os itens abaixo, o revisor assume responsabilidade técnica.
@@ -121,17 +113,14 @@ https://SEU-JIRA/browse/ABC-123
 - [ ] Declaro que, se este código causar problemas futuros, reconheço que
     **a responsabilidade é compartilhada entre autor e revisores**
 
----
-
 ## ℹ️ Observações importantes sobre este checklist
 
 - Este checklist deve ser preenchido **somente pelo REVISOR**
+- Este checklist deve ter **os mesmos itens do [checklist original](https://github.com/labflix/.github/blob/main/pull_request_template.md)**
 - Aprovar uma PR sem leitura completa é **falha grave de processo**
 - Confiança pessoal **não substitui** revisão técnica
 - “Depois a gente arruma” **não é aceitável**
-- Se algo parecer errado, **questione**, mesmo que o autor seja sênior
-
----
+- Se algo parecer errado, **questione**, mesmo que o autor seja mais sênior que o revisor
 
 > **Code review não é aprovação social.  
 > É um contrato de responsabilidade compartilhada.**
