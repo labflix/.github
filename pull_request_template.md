@@ -1,3 +1,3 @@
 # Por favor, vá até a aba "Preview" e abra em uma nova guia o template de PR apropriado e então copie e cole todo o código no lugar desta descrição:  
-- [Para PRs para as branches homol ou production](https://github.com/labflix/.github/blob/main/PULL_REQUEST_TEMPLATE/HOMOL_OU_PRODUCTION.md?plain=1)
-- [Para PRs para branch dev ou outras PRs](https://github.com/labflix/.github/blob/main/PULL_REQUEST_TEMPLATE/DEV_OU_OUTROS.md?plain=1)
+- [Para PRs para as branches homol ou production](https://github.com/labflix/.github/blob/main/templates/HOMOL_OU_PRODUCTION.md?plain=1)
+- [Para PRs para branch dev ou outras PRs](https://github.com/labflix/.github/blob/main/templates/DEV_OU_OUTROS.md?plain=1)
