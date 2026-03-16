@@ -42,12 +42,11 @@ https://SEU-JIRA/browse/ABC-123
   - hotfix/ABC-123
   - release/ABC-123
 - [ ] A branch **NÃO** foi criada a partir de dev ou homol
-- [ ] O título da PR segue o padrão: ABC-123 - Descrição clara e objetiva da mudança
-- [ ] O link da task no Jira foi informado e corresponde ao código alterado
-- [ ] A PR possui **apenas uma responsabilidade clara**
 - [ ] Não existem commits de merge de:
   - dev
   - homol
+- [ ] O título da PR segue o padrão: ABC-123
+- [ ] A PR possui **apenas uma responsabilidade clara**
 - [ ] A PR não está marcada como WIP / Draft
 - [ ] O autor da PR está corretamente definido como responsável (Assignee)
 
@@ -58,7 +57,6 @@ https://SEU-JIRA/browse/ABC-123
 - [ ] **Li todos os arquivos modificados**, exceto arquivos gerados automaticamente
 - [ ] **Entendi o porquê de cada mudança**, não apenas “o que foi feito”
 - [ ] O código resolve **exatamente** o que está descrito no Jira — nem mais, nem menos
-- [ ] Não existem mudanças “aproveitando a PR” (refactors oportunistas)
 - [ ] Não há código comentado, temporário ou “pra depois”
 - [ ] Não foram adicionados `console.log`, `debugger`, logs temporários ou código morto
 - [ ] Não foram adicionados `eslint-disable`, `@ts-ignore` ou similares sem justificativa **documentada**
@@ -81,9 +79,7 @@ https://SEU-JIRA/browse/ABC-123
 
 - [ ] O código foi testado manualmente pelo autor
 - [ ] O revisor entende **como** testar essa mudança
-- [ ] Casos de erro e bordas (edge cases) foram considerados
 - [ ] Não há dependência implícita de estado externo (cache, env local, dados mágicos)
-- [ ] O comportamento em dev/homol é previsível e consistente
 
 ### 🌱 Variáveis de ambiente / Configurações
 
@@ -101,7 +97,6 @@ https://SEU-JIRA/browse/ABC-123
   - homol
   - production
   - release/*
-- [ ] Nenhum squash ou rebase foi realizado fora de production
 - [ ] Esta PR **não** contamina histórico de outras branches
 
 ## 🧾 Declaração final do revisor (obrigatória)
@@ -109,7 +104,6 @@ https://SEU-JIRA/browse/ABC-123
 > ⚠️ Ao marcar os itens abaixo, o revisor assume responsabilidade técnica.
 
 - [ ] Declaro que **li e revisei conscientemente todo o código desta PR**
-- [ ] Declaro que o nível de qualidade do projeto **não foi reduzido**
 - [ ] Declaro que reconheço que **a responsabilidade é compartilhada entre autor e revisores.**
 
 ## ℹ️ Observações importantes sobre este checklist
@@ -117,8 +111,6 @@ https://SEU-JIRA/browse/ABC-123
 - Este checklist deve ser preenchido **somente pelo REVISOR**
 - Este checklist deve ter **os mesmos itens do [checklist original](https://github.com/labflix/.github/blob/main/pull_request_template.md)**
 - Aprovar uma PR sem leitura completa é **falha grave de processo**
-- Confiança pessoal **não substitui** revisão técnica
-- “Depois a gente arruma” **não é aceitável**
 - Se algo parecer errado, **questione**, mesmo que o autor seja mais sênior que o revisor
 
 > **Code review não é aprovação social.  
