@@ -75,9 +75,8 @@ https://SEU-JIRA/browse/ABC-123
 - [ ] O código não introduz acoplamento desnecessário
 - [ ] O código não dificulta testes ou manutenção futura
 
-### 🧪 Testes e validação
+### 🧪 Validação
 
-- [ ] O código foi testado manualmente pelo autor
 - [ ] O revisor entende **como** testar essa mudança
 - [ ] Não há dependência implícita de estado externo (cache, env local, dados mágicos)
 
