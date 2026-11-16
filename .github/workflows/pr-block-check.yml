@@ -1,0 +1,48 @@
+name: PR Block Check
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  check-block:
+    name: check-block
+    runs-on: ubuntu-latest
+    steps:
+      - name: Block merge on wip or blocked
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import sys
+
+          with open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8") as event_file:
+              pull_request = json.load(event_file)["pull_request"]
+
+          labels = [label["name"].casefold() for label in pull_request.get("labels") or []]
+          title = pull_request.get("title") or ""
+          body = pull_request.get("body") or ""
+          body = re.sub(r"<!--.*?-->", "", body, flags=re.DOTALL)
+          body = re.sub(r"^\s*[-*] \[[ xX]\].*$", "", body, flags=re.MULTILINE)
+          text = f"{title}\n{body}"
+
+          failed = False
+          if re.search(r"\bwip\b", text, flags=re.IGNORECASE) or "wip" in labels:
+              print(
+                  '::error::Merge blocked: the PR contains "wip". '
+                  "Remove it from the title, body, or labels before integrating."
+              )
+              failed = True
+          if "blocked" in labels:
+              print(
+                  '::error::Merge blocked: the PR has the "blocked" label. '
+                  "Remove the label before integrating."
+              )
+              failed = True
+          if not failed:
+              print('No "wip" and no "blocked" label. Depends on is checked by the "dependencies" job.')
+          sys.exit(1 if failed else 0)
+          PY
