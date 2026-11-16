@@ -1,0 +1,23 @@
+name: PR Base Branch
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  require-production-base:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require base branch production
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -euo pipefail
+          if [ "${BASE_REF}" != "production" ]; then
+            echo "::error::PRs must target 'production' (got '${BASE_REF}'). Create the branch from origin/production and open the PR against production."
+            exit 1
+          fi
+          echo "Base branch is production."

@@ -1,0 +1,5 @@
+# Org-level owners for Labflix. Mirrored in workflows/pr-review.yml as ORG_DEFAULT_OWNERS.
+# Product repos may add complementary @user or @org/team entries in their own .github/CODEOWNERS.
+# Merging requires one approval from the combined pool (org ∪ repo). Copilot does not count.
+
+* @labflix/Admin_tec

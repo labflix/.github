@@ -1,0 +1,33 @@
+name: Release notes
+
+on:
+  workflow_call:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-notes:
+    name: release-notes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: labflix/.github
+          ref: main
+          path: .org-github
+          sparse-checkout: |
+            scripts
+          persist-credentials: false
+      - run: python3 .org-github/scripts/changelog.py release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

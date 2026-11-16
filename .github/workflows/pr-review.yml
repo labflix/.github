@@ -1,0 +1,339 @@
+name: PR review
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  pull-requests: write
+  members: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  owner-review:
+    name: owner-review
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request reviewers and require minimal approval
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action }}
+          EVENT_REVIEW_LOGIN: ${{ github.event.review.user.login }}
+          EVENT_REVIEW_STATE: ${{ github.event.review.state }}
+          IS_DRAFT: ${{ github.event.pull_request.draft }}
+          # Keep in sync with CODEOWNERS in labflix/.github
+          ORG_DEFAULT_OWNERS: "@labflix/Admin_tec"
+        run: |
+          set -euo pipefail
+          if [ "${IS_DRAFT}" = "true" ]; then
+            echo "Draft PR: reviewers are requested when it is marked ready."
+            exit 0
+          fi
+
+          fetch_codeowners() {
+            gh api --method GET \
+              -H "Accept: application/vnd.github.raw" \
+              "/repos/${REPO}/contents/.github/CODEOWNERS" \
+              -f "ref=${1}"
+          }
+
+          base_owners="$(fetch_codeowners "${BASE_SHA}" 2>/dev/null || true)"
+          head_owners="$(fetch_codeowners "${HEAD_SHA}" 2>/dev/null || true)"
+          printf '%s\n' "${ORG_DEFAULT_OWNERS}" > codeowners-org.txt
+          printf '%s\n' "${base_owners}" > codeowners-base.txt
+          printf '%s\n' "${head_owners}" > codeowners-head.txt
+
+          if ! python3 - <<'PY'
+          import json
+          import os
+          import re
+          import subprocess
+          import sys
+
+          MENTION_RE = re.compile(
+              r"@([A-Za-z0-9][A-Za-z0-9_-]*(?:/[A-Za-z0-9][A-Za-z0-9_-]*)?)"
+          )
+
+
+          def mentions_from_file(path):
+              seen = []
+              seen_keys = set()
+              try:
+                  lines = open(path, encoding="utf-8")
+              except OSError:
+                  return seen
+              for line in lines:
+                  stripped = line.strip()
+                  if not stripped or stripped.startswith("#"):
+                      continue
+                  for name in MENTION_RE.findall(stripped):
+                      key = name.casefold()
+                      if key in seen_keys:
+                          continue
+                      seen_keys.add(key)
+                      seen.append(name)
+              return seen
+
+
+          def classify(mentions):
+              users = []
+              teams = []
+              for name in mentions:
+                  if "/" in name:
+                      teams.append(name)
+                  else:
+                      users.append(name)
+              return users, teams
+
+
+          def union(sequences):
+              seen = []
+              seen_keys = set()
+              for sequence in sequences:
+                  for name in sequence:
+                      key = name.casefold()
+                      if key in seen_keys:
+                          continue
+                      seen_keys.add(key)
+                      seen.append(name)
+              return seen
+
+
+          def gh_api(args):
+              result = subprocess.run(
+                  ["gh", "api", *args],
+                  check=False,
+                  capture_output=True,
+                  text=True,
+              )
+              return result.returncode, result.stdout, result.stderr
+
+
+          def team_members(org, slug):
+              code, stdout, stderr = gh_api(
+                  [
+                      "--paginate",
+                      f"/orgs/{org}/teams/{slug}/members",
+                      "--jq",
+                      ".[].login",
+                  ]
+              )
+              if code != 0:
+                  print(
+                      f"::warning::Could not list members of @{org}/{slug}: {stderr.strip() or stdout.strip()}",
+                      file=sys.stderr,
+                  )
+                  return []
+              return [line.strip() for line in stdout.splitlines() if line.strip()]
+
+
+          def login_of(review):
+              user = review.get("user") or review.get("author") or {}
+              return (user.get("login") or "").casefold()
+
+
+          def state_of(review):
+              return (review.get("state") or "").upper()
+
+
+          def sort_key(review):
+              return review.get("submittedAt") or review.get("submitted_at") or ""
+
+
+          org_mentions = mentions_from_file("codeowners-org.txt")
+          repo_mentions = union(
+              [
+                  mentions_from_file("codeowners-base.txt"),
+                  mentions_from_file("codeowners-head.txt"),
+              ]
+          )
+          mentions = union([org_mentions, repo_mentions])
+          if not mentions:
+              print(
+                  "::error::No owners found. Set ORG_DEFAULT_OWNERS and/or .github/CODEOWNERS.",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+          users, teams = classify(mentions)
+          print(
+              f"Owner mentions (org ∪ repo): {', '.join(mentions)}",
+              file=sys.stderr,
+          )
+          print(f"Users: {', '.join(users) or '(none)'}", file=sys.stderr)
+          print(f"Teams: {', '.join(teams) or '(none)'}", file=sys.stderr)
+
+          repo = os.environ["REPO"]
+          default_org = repo.split("/", 1)[0]
+          author = os.environ.get("AUTHOR", "").casefold()
+          pr_number = os.environ["PR_NUMBER"]
+
+          eligible_logins = []
+          eligible_keys = set()
+          for user in users:
+              key = user.casefold()
+              if key == author or key in eligible_keys:
+                  continue
+              eligible_keys.add(key)
+              eligible_logins.append(user)
+
+          for team in teams:
+              org, slug = team.split("/", 1)
+              for member in team_members(org or default_org, slug):
+                  key = member.casefold()
+                  if key == author or key in eligible_keys:
+                      continue
+                  eligible_keys.add(key)
+                  eligible_logins.append(member)
+
+          if not eligible_logins:
+              print(
+                  "::error::Owner pool has no eligible reviewer besides the author; merging needs 1.",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+          with open("owners.txt", "w", encoding="utf-8") as owners_file:
+              owners_file.write("\n".join(eligible_logins) + "\n")
+          with open("request-users.txt", "w", encoding="utf-8") as users_file:
+              users_file.write("\n".join(users) + ("\n" if users else ""))
+          with open("request-teams.txt", "w", encoding="utf-8") as teams_file:
+              teams_file.write("\n".join(teams) + ("\n" if teams else ""))
+
+          result = subprocess.run(
+              [
+                  "gh",
+                  "pr",
+                  "view",
+                  pr_number,
+                  "--repo",
+                  repo,
+                  "--json",
+                  "reviews",
+              ],
+              check=False,
+              capture_output=True,
+              text=True,
+          )
+          if result.returncode != 0:
+              print(
+                  f"::error::Could not read PR reviews: {result.stderr.strip() or result.stdout.strip()}",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+          payload = json.loads(result.stdout) if result.stdout.strip() else {}
+          reviews = payload.get("reviews") if isinstance(payload, dict) else payload
+          if not isinstance(reviews, list):
+              reviews = []
+          approved = {login.casefold(): False for login in eligible_logins}
+          display = {login.casefold(): login for login in eligible_logins}
+
+          for review in sorted(reviews, key=sort_key):
+              login = login_of(review)
+              if login not in approved:
+                  continue
+              state = state_of(review)
+              if state == "APPROVED":
+                  approved[login] = True
+              elif state in {"CHANGES_REQUESTED", "DISMISSED"}:
+                  approved[login] = False
+
+          event_login = (os.environ.get("EVENT_REVIEW_LOGIN") or "").casefold()
+          event_state = (os.environ.get("EVENT_REVIEW_STATE") or "").upper()
+          if event_login in approved:
+              if event_state == "APPROVED":
+                  approved[event_login] = True
+              elif event_state in {"CHANGES_REQUESTED", "DISMISSED"}:
+                  approved[event_login] = False
+
+          print("Eligible approvers: " + ", ".join(eligible_logins), file=sys.stderr)
+          for key, ok in approved.items():
+              print(
+                  f"{display[key]}: {'approved' if ok else 'not approved'}",
+                  file=sys.stderr,
+              )
+
+          approved_names = [display[key] for key, ok in approved.items() if ok]
+          with open("approved.txt", "w", encoding="utf-8") as approved_file:
+              approved_file.write("\n".join(approved_names) + ("\n" if approved_names else ""))
+          PY
+          then
+            exit 1
+          fi
+
+          mapfile -t request_users < request-users.txt
+          mapfile -t request_teams < request-teams.txt
+          mapfile -t approved < approved.txt
+          mapfile -t eligible < owners.txt
+
+          if [ "${EVENT_NAME}" = "pull_request" ] && [ "${GITHUB_RUN_ATTEMPT}" = "1" ]; then
+            case "${EVENT_ACTION}" in
+              opened|ready_for_review|reopened)
+                for user in "${request_users[@]}"; do
+                  [ -n "${user}" ] || continue
+                  if [ "${user,,}" = "${AUTHOR,,}" ]; then
+                    echo "Author ${user} is not requested."
+                    continue
+                  fi
+                  if [ "${#approved[@]}" -gt 0 ] && printf '%s\n' "${approved[@]}" | grep -qx "${user}"; then
+                    echo "${user} already approved; not requested."
+                    continue
+                  fi
+                  if gh api \
+                    --method POST \
+                    -H "Accept: application/vnd.github+json" \
+                    "/repos/${REPO}/pulls/${PR_NUMBER}/requested_reviewers" \
+                    -f "reviewers[]=${user}"; then
+                    echo "Requested user ${user}."
+                  else
+                    echo "Could not request user ${user} (already requested or unavailable)."
+                  fi
+                done
+
+                for team in "${request_teams[@]}"; do
+                  [ -n "${team}" ] || continue
+                  slug="${team##*/}"
+                  if gh api \
+                    --method POST \
+                    -H "Accept: application/vnd.github+json" \
+                    "/repos/${REPO}/pulls/${PR_NUMBER}/requested_reviewers" \
+                    -f "team_reviewers[]=${slug}"; then
+                    echo "Requested team ${team}."
+                  else
+                    echo "Could not request team ${team} (already requested, no repo access, or unavailable)."
+                  fi
+                done
+
+                if gh api \
+                  --method POST \
+                  -H "Accept: application/vnd.github+json" \
+                  "/repos/${REPO}/pulls/${PR_NUMBER}/requested_reviewers" \
+                  -f "reviewers[]=copilot-pull-request-reviewer[bot]"; then
+                  echo "Requested Copilot."
+                else
+                  echo "Copilot review request skipped (bot unavailable or already requested)."
+                fi
+                ;;
+            esac
+          fi
+
+          required=1
+          approved_count=0
+          if [ "${#approved[@]}" -gt 0 ] && [ -n "${approved[0]:-}" ]; then
+            approved_count=${#approved[@]}
+          fi
+          if [ "${approved_count}" -lt "${required}" ]; then
+            echo "::error::Merge blocked until ${required} eligible owner approves (${approved_count} so far): ${eligible[*]}. Copilot does not count."
+            exit 1
+          fi
+          echo "Approved by: ${approved[*]}"
