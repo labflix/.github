@@ -50,6 +50,8 @@ Os reusable workflows **precisam** viver em `.github/workflows/` dentro do repos
 | `pr-review.yml` | Owners org + repo, review e 1 aprovação elegível |
 | `release-notes.yml` | Atualiza o draft GitHub Release `Next` |
 
+Todos rodam em `ubuntu-slim` (1 vCPU, um terço do preço do `ubuntu-latest`), menos o `code-smells.yml`. Cada job é cobrado como no mínimo 1 minuto, e esses jobs levam segundos. O `ubuntu-slim` é um container sem Docker e com limite de 15 minutos por job: o que precisar de Docker ou de mais tempo fica no `ubuntu-latest`.
+
 ## Changelog
 
 [`scripts/changelog.py`](scripts/changelog.py) (Python 3 do runner): Conventional Commits → markdown; modos `pr` e `release`. Os workflows fazem checkout deste repo em `.org-github` para executar o script.

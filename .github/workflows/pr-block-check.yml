@@ -9,7 +9,7 @@ permissions:
 jobs:
   check-block:
     name: check-block
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Block merge on wip or blocked
         run: |
