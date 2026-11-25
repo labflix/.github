@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   require-production-base:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Require base branch production
         env:
